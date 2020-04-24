@@ -1,9 +1,9 @@
 import random as r
 import os
 from prettytable import PrettyTable
+from tables import *
 
 clear = lambda: os.system('cls')
-xp_table = {0: 10, 1: 20, 2: 30, 3: 50, 4: 100, 5: 200, 6: 350, 7: 500}
 tbl = PrettyTable()
 
 class NPC:
@@ -21,8 +21,8 @@ class Player:
 
         # Максимально возможное ХП перса
         # ХП перса изначально равно максимальному
-        self.maxhp = maxhp
         self.hp = maxhp
+        self.maxhp = maxhp
 
         self.lvl = lvl
         self.xp = 0
@@ -98,3 +98,13 @@ class Player:
     def getmoney(self, money):
         self.money += money
         print(f'Ты получил {money} биткоинов')
+
+    class Inventory:
+        def __init__(self, size:int, *items):
+            self.inv = {}
+            if items:
+                for item in items:
+                    self.inv.update(item)
+
+
+    inventory = Inventory(3)
