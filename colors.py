@@ -1,7 +1,6 @@
 from ctypes import *
 
-
-def color(text, color):
+def print_color(text, color):
     windll.Kernel32.GetStdHandle.restype = c_ulong
     h = windll.Kernel32.GetStdHandle(c_ulong(0xfffffff5))
     colors = {
@@ -17,7 +16,3 @@ def color(text, color):
     windll.Kernel32.SetConsoleTextAttribute(h, colors[color])
     print(text)
     windll.Kernel32.SetConsoleTextAttribute(h, 0)
-
-
-color("hello", "red")
-color("whats up?", "light")
