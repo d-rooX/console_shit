@@ -1,4 +1,3 @@
-from tabulate import tabulate
-
-print(tabulate([["Hello"], ["1\n2\n3\n4"]], headers= "firstrow"))
-print("\n".join(["hello", "123", "123"]))
+a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+sq = [n*n for n in a]
+print(sq)
