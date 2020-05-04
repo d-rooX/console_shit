@@ -1,34 +1,31 @@
 xp_table = {0: 10, 1: 20, 2: 30, 3: 50, 4: 100, 5: 200, 6: 350, 7: 500, 8: 1000, 9: 3500, 10: 5000}
-items_ends = {"sword": "к максимальному урону", "shield": "к максимальной защите"}
+items_ends = {"sword": "к максимальному урону", "shield": "к максимальной защите", "heal": "к текущему здоровью"}
+
 types_table = {
-    "sword": "Меч",
-    "shield": "Щит",
-    # "hl":"Хилка"
+        "sword":  "Меч",
+        "shield": "Щит",
+        "heal":   "Хилка",
 }
 items_table = {
-    "sword": {
-        "sw1": {"name": "Ржавый еблоструй", "pwr": 1, "price": 20, "type": "sword", "id": "sw1"},
-        "sw2": {"name": "Новый еблоструй", "pwr": 2, "price": 35, "type": "sword", "id": "sw2"},
-        "sw3": {"name": "Тупой конец", "pwr": 3, "price": 60, "type": "sword", "id": "sw3"},
-        "sw4": {"name": "Острый конец", "pwr": 4, "price": 100, "type": "sword", "id": "sw4"},
-    },
-    "shield": {
-        "sh1": {"name": "Хлипкое моргало", "pwr": 1, "price": 20, "type": "shield", "id": "sh1"},
-        "sh2": {"name": "Прочное моргало", "pwr": 2, "price": 35, "type": "shield", "id": "sh2"},
-        "sh3": {"name": "Прикольный блокиратор", "pwr": 3, "price": 60, "type": "shield", "id": "sh3"},
-        "sh4": {"name": "Хайповый блокиратор", "pwr": 4, "price": 100, "type": "shield", "id": "sh4"}
-    },
-    # "item": {
-    #     "heal": {
-    #         "Тухлый чифир": 2,
-    #         "Бабушкин навар": 3,
-    #         "Едрёный шлак": 4,
-    #         "Лютое пойло": 10,
-    #         "Кола с кофе": 9999
-    #     }
-    # }
+        "sword":  {
+                "sw1": {"name": "Ржавый еблоструй", "pwr": 1, "price": 20, "type": "sword", "id": "sw1"},
+                "sw2": {"name": "Новый еблоструй", "pwr": 2, "price": 35, "type": "sword", "id": "sw2"},
+                "sw3": {"name": "Тупой конец", "pwr": 3, "price": 60, "type": "sword", "id": "sw3"},
+                "sw4": {"name": "Острый конец", "pwr": 4, "price": 100, "type": "sword", "id": "sw4"},
+        },
+        "shield": {
+                "sh1": {"name": "Хлипкое моргало", "pwr": 1, "price": 20, "type": "shield", "id": "sh1"},
+                "sh2": {"name": "Прочное моргало", "pwr": 2, "price": 35, "type": "shield", "id": "sh2"},
+                "sh3": {"name": "Прикольный блокиратор", "pwr": 3, "price": 60, "type": "shield", "id": "sh3"},
+                "sh4": {"name": "Хайповый блокиратор", "pwr": 4, "price": 100, "type": "shield", "id": "sh4"}
+        },
+        "item":   {
+                "hl1": {"name": "Тухлый чифир", "pwr": 3, "price": 15, "type": "heal", "id": "hl1"},
+                "hl2": {"name": "Бабушкин навар", "pwr": 5, "price": 20, "type": "heal", "id": "hl2"},
+                "hl3": {"name": "Едрёный шлак", "pwr": 8, "price": 30, "type": "heal", "id": "hl3"},
+                "hl4": {"name": "Лютое пойло", "pwr": 10, "price": 50, "type": "heal", "id": "hl4"},
+        }
 }
-
 
 def get_item(id, price_diff=0):
     for type in items_table:
@@ -37,7 +34,6 @@ def get_item(id, price_diff=0):
                 res_item = items_table[type][id]
                 res_item['price'] += price_diff
                 return res_item
-
 
 def get_all_ids():
     ids = []

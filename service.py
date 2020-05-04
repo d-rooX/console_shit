@@ -14,13 +14,12 @@ class City:
             self.economics = r.choice(("low", "low", "low", "low", "low", "medium", "medium", "medium", "medium", "high", "high"))
 
             # low - 0:2, medium - 3:4, high - 5:6
-            self.amount = r.randint(0, 2) if self.economics == "low" else r.randint(3,4) if self.economics == "medium" else r.randint(5,6)
+            self.amount = r.randint(0, 2) if self.economics == "low" else r.randint(3,4) if self.economics == "medium" else r.randint(5, 6)
             # разница рыночной цены (цены в словаре) от цены в этом городе
             self.diff = r.randint(-15, -4) if self.economics == "low" else r.randint(-3,15) if self.economics == "medium" else r.randint(15, 30)
 
             # random.sample(population, k) - список длиной k из последовательности population.
             self.assortment = [get_item(id, self.diff) for id in r.sample(get_all_ids(), self.amount)]
-
 
         def check(self):
             tbl_headers = ["Предмет", "Характеристики", "Тип", "Цена"]
@@ -45,31 +44,32 @@ class NPC:
 class Player:
     class Inventory:
         def __init__(self, size=3):
-            self.inv = []
             self.size = size
+            self.inv = []
 
         def add(self, item):
             if len(self.inv) < self.size:
-                item.update({"is_equipped":False})
+                item.update({"is_equipped": False}) if item["type"] in ("sword", "shield") else None
                 self.inv.append(item)
                 print(f'Обьект "{item["name"]}" добавлен в инвентарь')
             else:
                 print("Инвентарь переполнен")
-
 
         def check(self):
             if len(self.inv) > 0:
                 tbl_headers = ["Предмет", "Характеристики", "Тип", "Экипирован?"]
                 tbl_objects = []
                 for item in self.inv:
-                    tbl_objects.append([item["name"], f'+{item["pwr"]} {items_ends[item["type"]]}', types_table[item["type"]], "Да" if item["is_equipped"] else "Нет"])
+                    is_equipped = ("Да" if item["is_equipped"] else "Нет") if item["type"] in ("sword", "shield") else None
+                    tbl_objects.append([item["name"], f'+{item["pwr"]} {items_ends[item["type"]]}', types_table[item["type"]], is_equipped])
+
                 print(tabulate(tbl_objects, headers=tbl_headers, tablefmt="grid"))
             else:
                 print("Твой инвентарь пуст...")
 
     inventory = Inventory()
 
-    def __init__(self, name, maxhp = 10, lvl = 0):
+    def __init__(self, name, maxhp=10, lvl=0):
         self.name = name
         self.money = 0
 
@@ -95,8 +95,8 @@ class Player:
         if self.fight_available:
             print(f'Вы атаковали {npc.name}')
             table = [["", "Уровень", "Здоровье", "Атака", "Защита"],
-                    [self.name, self.lvl, self.hp, self.attack, self.defend],
-                    [npc.name, npc.lvl, npc.hp, npc.attack, npc.defend]]
+                     [self.name, self.lvl, self.hp, self.attack, self.defend],
+                     [npc.name, npc.lvl, npc.hp, npc.attack, npc.defend]]
             print(tabulate(table, headers="firstrow"))
             print("Провести бой автоматически?")
             inp = input("Напишите \"да\" или нажмите Enter для отказа")
@@ -143,7 +143,7 @@ class Player:
                             print(f'Ты получил {pl_dmg} урона')
                         else:
                             print(f'Ты получил {pl_dmg} урона, а нанёс {npc_dmg}')
-                        print(tabulate([["Имя", "HP"], [self.name, self.hp], [npc.name, npc.hp]], headers = "firstrow"))
+                        print(tabulate([["Имя", "HP"], [self.name, self.hp], [npc.name, npc.hp]], headers="firstrow"))
                         input("Enter...")
         else:
             print("Некого атаковать...")
@@ -159,7 +159,7 @@ class Player:
                 self.xp -= self.needXP
                 self.needXP = xp_table[self.lvl]
             print(
-                f'Ты повысил свой уровень до {self.lvl}, теперь у тебя {self.xp} опыта, и нужно набрать ещё {self.needXP - self.xp}')
+                    f'Ты повысил свой уровень до {self.lvl}, теперь у тебя {self.xp} опыта, и нужно набрать ещё {self.needXP - self.xp}')
         else:
             print(f'Ты получил {xp} XP')
 
@@ -171,7 +171,7 @@ class Player:
         self.money -= money
         print(f'Ты потратил {money} биткоинов')
 
-    def buy(self, shop, item_index, inventory = inventory):
+    def buy(self, shop, item_index, inventory=inventory):
         assortment = shop.assortment
         if shop.amount > 0 and assortment[item_index] and assortment[item_index]["price"] <= self.money:
             inventory.add(shop.assortment[item_index])
@@ -179,24 +179,66 @@ class Player:
         else:
             print("Ты не можешь купить эту вещь")
 
-    def equip(self, item_index, inv = inventory.inv):
+    def equip(self, item_index, inv=inventory.inv):
         try:
             item = inv[item_index]
             if self.sword != item["id"] and self.shield != item["id"]:
+                if self.sword != None:
+                    self.unequip("sword")
+                elif self.shield != None:
+                    self.unequip("shield")
+
                 if item["type"] == "sword":
                     self.sword = item["id"]
-                    self.attack = item["pwr"]+1
+                    self.attack = item["pwr"] + 1
                     inv[item_index]["is_equipped"] = True
-                    print(f'Вы взяли в руки меч {item["name"]}')
+                    print(f'Ты экипировал меч {item["name"]}')
                 elif item["type"] == "shield":
                     self.shield = item["id"]
-                    self.defend = item["pwr"]+1
+                    self.defend = item["pwr"] + 1
                     inv[item_index]["is_equipped"] = True
-                    print(f'Вы взяли в руки щит {item["name"]}')
-        except:
-            print("Не прикалывайся.")
+                    print(f'Ты экпировал меч {item["name"]}')
+            else:
+                print("У тебя уже надета эта вещь")
+        except IndexError:
+            print("Предмета под таким номером нет")
+
+    def unequip(self, type, inv=inventory.inv):
+            if (type == "sword" and self.sword != None) or (type == "shield" and self.shield != None):
+                item = get_item(self.sword if type == "sword" else self.shield)
+                index = inv.index(item)
+                if type == "sword":
+                    self.attack = 1
+                    self.sword = None
+                else:
+                    self.defend = 1
+                    self.shield = None
+
+                inv[index]["is_equipped"] = False
+                print(f'Ты снял {item["name"]}')
+            else:
+                print("У тебя нет экипированного " + ("меча" if type == "sword" else "щита"))
+
+    def use(self, item_index, inv=inventory.inv):
+        try:
+            item = inv[item_index]
+
+            if item["id"][:2] == "hl":
+                if self.hp + (heal := item["pwr"]) <= self.maxhp:
+                    self.hp += heal
+                else:
+                    heal = self.maxhp - self.hp
+                    self.hp = self.maxhp
+                print(f'Вы восстановили {heal} здоровья, теперь у вас {self.hp} HP')
+                inv.remove(item)
+            else:
+                print("Ты не можешь использовать эту вещь")
+        except IndexError:
+            print("Предмета под таким номером нет")
 
     def get_stats(self):
-        print(tabulate([["Деньги", "Опыт", "Уровень", "HP", "Атака", "Защита"],
-                        [self.money, self.xp, self.lvl, self.hp, self.attack, self.defend]],
+        print(tabulate([["Деньги", "Опыт", "Уровень"],
+                        [self.money, self.xp, self.lvl]],
                        headers="firstrow", tablefmt="github"))
+        print(tabulate([["HP", "Атака", "Защита"], [self.hp, self.attack, self.defend]], headers="firstrow",
+                       tablefmt="github"))
