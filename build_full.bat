@@ -1,1 +1,1 @@
-pyinstaller main.py
+C:\Users\bot04\AppData\Roaming\Python\Python38\Scripts\pyinstaller.exe main.py
