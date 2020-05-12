@@ -21,6 +21,10 @@ class City:
         # random.sample(population, k) - список длиной k из последовательности population.
         self.assortment = [get_item(id, self.diff) for id in r.sample(get_all_ids(), self.amount)]
 
+        # генерим отель или мотель в зависимости от экономики города
+        self.hotel = "hotel" if self.economics == "high" else "motel" if self.economics == "medium" else False
+        self.hotel_cost = r.randint(20, 30) if self.hotel == 'hotel' else r.randint(5, 10) if self.hotel == 'motel'else 0
+
     def check(self):
         tbl_headers = ["Предмет", "Характеристики", "Тип", "Цена"]
         tbl_objects = []
@@ -96,7 +100,6 @@ class Player:
 
         auto = True if inp == "y" else False
         while True:
-            clear()
             for item in self.inventory.inv:
                 if item["type"] == "hl":
                     heal_index = self.inventory.index(item)
@@ -114,12 +117,12 @@ class Player:
                     print(f'{r.choice(ends_fight_lose)}')
                     self.state = "outside"
                     self.get_xp(xp_table[npc_lvl]//2)
-                    break
+                    return False
             elif npc_hp <= 0:
                 print(f'{npc_name} {r.choice(ends_fight_win)}')
                 self.state = "outside"
                 self.get_xp(xp_table[npc_lvl])
-                break
+                return True
             else:
                 # Рандом определяет кто сколько урона получит, учитывая уровень защиты
                 pl_dmg = r.randint(0, npc_attack) - r.randint(0, self.defend)
@@ -138,6 +141,7 @@ class Player:
 
                 # В зависимости от полученого урона, выводим соответсвующее сообщение...
                 if not auto:
+                    clear()
                     if pl_dmg == 0 and npc_dmg == 0:
                         print("Постояли подумали...")
                     elif pl_dmg == 0 and npc_dmg > 0:
@@ -148,7 +152,6 @@ class Player:
                         print(f'Ты получил {pl_dmg} урона, а нанёс {npc_dmg}\n')
                     print(tabulate([["Имя", "HP"], [self.name, self.hp], [npc_name, npc_hp]], headers="firstrow"))
                     input("Enter...")
-
     def get_xp(self, xp):
         self.xp += xp
         if self.xp >= self.needXP:
@@ -159,6 +162,9 @@ class Player:
                 # Считаем разницу опыта и того который нужен для след. уровня, а потом меняем нужное количество опыта исходя из таблицы
                 self.xp -= self.needXP
                 self.needXP = xp_table[self.lvl]
+                # Считаем ХП
+                self.maxhp = hp_table[self.lvl]
+                self.hp = self.maxhp
             print(f'Ты повысил свой уровень до {self.lvl}, теперь у тебя {self.xp} опыта, и нужно набрать ещё {self.needXP - self.xp}')
         else:
             print(f'Ты получил {xp} XP')
@@ -182,43 +188,36 @@ class Player:
         elif item['type'] == "sheild":
             if self.sheild != None: self.unequip("sheild")
             self.shield = item['id']
-            self.attack += item["pwr"]
+            self.defend += item["pwr"]
         else: print("Ты не можешь надеть эту вещь")
-    def unequip(self, type, inv=inventory.inv):
-        if (type == "sword" and self.sword != None) or (type == "shield" and self.shield != None):
-            item = get_item(self.sword if type == "sword" else self.shield)
-            index = inv.index(item)
-            if type == "sword":
-                self.attack = 1
+    def unequip(self, item_index, inv=inventory.inv):
+        item_index -= 1
+        item = inv[item_index]
+        if item['is_equipped']:
+            if item['type'] == "sword":
                 self.sword = None
-            else:
-                self.defend = 1
+                self.attack = 1
+            elif item['type'] == "sheild":
                 self.shield = None
-            inv[index]["is_equipped"] = False
+                self.defend = 1
+            else: print("У тебя нет экипированного " + ("меча" if item['type'] == "sword" else "щита"))
+            inv[item_index]["is_equipped"] = False
             print(f'Ты снял {item["name"]}')
         else:
-            print("У тебя нет экипированного " + ("меча" if type == "sword" else "щита"))
+            print("Нельзя снять ненадетую вещь")
 
     def use(self, item_index, inv=inventory.inv):
         item_index -= 1
-        try:
-            item = inv[item_index]
-            if item["id"][:2] == "hl":
-                if self.hp + (heal := item["pwr"]) <= self.maxhp:
-                    self.hp += heal
-                else:
-                    heal = self.maxhp - self.hp
-                    self.hp = self.maxhp
-                print(f'Вы восстановили {heal} здоровья, теперь у вас {self.hp} HP')
-                inv.remove(item)
-            else:
-                print("Ты не можешь использовать эту вещь")
-        except IndexError:
-            print("Предмета под таким номером нет")
-        finally:
-            input("Enter...")
+        item = inv[item_index]
+        if item["type"] == "heal":
+            old_hp = self.hp
+            self.hp = (self.hp + item["pwr"]) if (self.hp + item["pwr"] <= self.maxhp) else self.maxhp
+            inv.remove(item)
+            print(f'Ты восстановил {self.hp - old_hp} здоровья, теперь у тебя {self.hp} HP')
+        else:
+            print('Ты не можешь использовать эту вещь')
 
     def get_stats(self):
-        print(tabulate([["Деньги", "Опыт", "Уровень", "HP", "Атака", "Защита"],
-                        [self.money, self.xp, self.lvl, self.hp, self.attack, self.defend]],
-                       headers="firstrow", tablefmt="grid"))
+        print(tabulate([["Деньги", "Опыт/Опыт до след. уровня/Уровень", "HP/MaxHP", "Атака/Защита"],
+                        [self.money, f'{self.xp}/{self.needXP}/{self.lvl}', f'{self.hp}/{self.maxhp}', f'{self.attack}/{self.defend}']],
+                        headers="firstrow", tablefmt="grid", stralign='center'))
