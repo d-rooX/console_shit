@@ -22,10 +22,9 @@ class City:
         self.assortment = [get_item(id, self.diff) for id in r.sample(get_all_ids(), self.amount)]
 
         # генерим отель или мотель в зависимости от экономики города
-        self.hotel = "hotel" if self.economics == "high" else "motel" if self.economics == "medium" else False
-        self.hotel_cost = r.randint(20, 30) if self.hotel == 'hotel' else r.randint(5, 10) if self.hotel == 'motel'else 0
-
-    def check(self):
+        self.hotel = True if self.economics == 'high' or self.economics == 'medium' else False
+        self.hotel_cost = r.randint(20, 30) if self.economics == 'high' else r.randint(5, 10) if self.economics == 'medium' else 0
+    def check_shop(self):
         tbl_headers = ["Предмет", "Характеристики", "Тип", "Цена"]
         tbl_objects = []
         for shop_item in self.assortment:
@@ -34,6 +33,14 @@ class City:
         # В зависимости от типа экономики выбираем оформление таблицы
         tablefmt = "simple" if self.economics == "low" else "grid" if self.economics == "medium" else "fancy_grid"
         print(tabulate(tbl_objects, headers=tbl_headers, tablefmt=tablefmt))
+    def check_city(self):
+        rows = (
+            ['Название города', self.name],
+            ['Уровень экономики', self.economics],
+            ['Есть ли отель?', f'{"Да" if self.hotel else "Нет"}'],
+            ['Разница цен', self.diff]
+        )
+        print(tabulate(rows))
 
 class Player:
     class Inventory:
@@ -83,6 +90,7 @@ class Player:
         self.state = "in city"  # ("in city", "outside", "fight")
 
     def fight(self, npc):
+        #todo: Rewrite this
         npc_name, npc_lvl, npc_attack, npc_defend, npc_hp = npc.values()
         print(f'Вас атаковал {npc_name}')
         table = [["", "Уровень", "Здоровье", "Атака", "Защита"],
@@ -95,8 +103,8 @@ class Player:
             is_flee_commited = bool(r.randint(0, 1))
             if is_flee_commited:
                 print("Тебе удалось избежать боя")
-                return
-            else: print("Сбежать не удалось")
+                return True
+            else: print("Сбежать не удалось"); input('Enter...')
 
         auto = True if inp == "y" else False
         while True:
@@ -163,12 +171,14 @@ class Player:
                 self.xp -= self.needXP
                 self.needXP = xp_table[self.lvl]
                 # Считаем ХП
-                self.maxhp = hp_table[self.lvl]
-                self.hp = self.maxhp
+            self.maxhp = hp_table[self.lvl]
+            self.hp = self.maxhp
             print(f'Ты повысил свой уровень до {self.lvl}, теперь у тебя {self.xp} опыта, и нужно набрать ещё {self.needXP - self.xp}')
         else:
             print(f'Ты получил {xp} XP')
-
+    def get_hp(self, hp):
+        if self.hp + hp >= self.maxhp: self.hp = self.maxhp
+        else: self.hp += hp
     # money
     def get_money(self, money):
         self.money += money
@@ -178,46 +188,52 @@ class Player:
         print(f'Ты потратил {money} биткоинов')
 
     # items
-    def equip(self, item_index, inv=inventory.inv):
-        item_index -= 1
-        item = inv[item_index]
-        if item['type'] == "sword":
-            if self.sword != None: self.unequip("sword")
-            self.sword = item['id']
-            self.attack += item["pwr"]
-        elif item['type'] == "sheild":
-            if self.sheild != None: self.unequip("sheild")
-            self.shield = item['id']
-            self.defend += item["pwr"]
-        else: print("Ты не можешь надеть эту вещь")
-    def unequip(self, item_index, inv=inventory.inv):
-        item_index -= 1
-        item = inv[item_index]
+    def unequip(self, item_type, inv=inventory.inv):
+        item_type -= 1
+        item = inv[item_type]
         if item['is_equipped']:
             if item['type'] == "sword":
                 self.sword = None
                 self.attack = 1
-            elif item['type'] == "sheild":
+            elif item['type'] == "shield":
                 self.shield = None
                 self.defend = 1
             else: print("У тебя нет экипированного " + ("меча" if item['type'] == "sword" else "щита"))
-            inv[item_index]["is_equipped"] = False
+            inv[item_type]["is_equipped"] = False
             print(f'Ты снял {item["name"]}')
         else:
             print("Нельзя снять ненадетую вещь")
-
     def use(self, item_index, inv=inventory.inv):
+        #todo: Refact this
         item_index -= 1
         item = inv[item_index]
         if item["type"] == "heal":
             old_hp = self.hp
-            self.hp = (self.hp + item["pwr"]) if (self.hp + item["pwr"] <= self.maxhp) else self.maxhp
+            self.get_hp(item["pwr"])
             inv.remove(item)
             print(f'Ты восстановил {self.hp - old_hp} здоровья, теперь у тебя {self.hp} HP')
-        else:
-            print('Ты не можешь использовать эту вещь')
+        elif item["type"] == "sword":
+            if self.sword != None: self.unequip("sword")
+            self.sword = item['id']
+            self.attack += item["pwr"]
+            inv[item_index]['is_equipped'] = True
+            print(f'Ты взял в руки {item["name"]}, что увеличело твою атаку до {self.attack}')
+        elif item['type'] == "shield":
+            if self.shield != None: self.unequip("shield")
+            self.shield = item['id']
+            self.defend += item["pwr"]
+            inv[item_index]['is_equipped'] = True
+            print(f'Ты взял в руки {item["name"]}, что увеличело твою защиту до {self.attack}')
+        else: print('Ты не можешь использовать эту вещь'); print(item['type'])
 
     def get_stats(self):
-        print(tabulate([["Деньги", "Опыт/Опыт до след. уровня/Уровень", "HP/MaxHP", "Атака/Защита"],
-                        [self.money, f'{self.xp}/{self.needXP}/{self.lvl}', f'{self.hp}/{self.maxhp}', f'{self.attack}/{self.defend}']],
-                        headers="firstrow", tablefmt="grid", stralign='center'))
+        rows = (
+                ['Деньги', self.money],
+                ['Опыт', f'{self.xp}/{self.needXP}'],
+                ['Уровень', self.lvl],
+                ['HP', f'{self.hp}/{self.maxhp}'],
+                ['Атака', self.attack],
+                ['Защита', self.defend],
+                ['____________', '____________'],
+        )
+        print(tabulate(rows, stralign='left'))
