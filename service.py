@@ -88,6 +88,8 @@ class Player:
         self.shield = None
 
         self.state = "in city"  # ("in city", "outside", "fight")
+        self.is_rested = False
+        self.steps = 0
 
     def fight(self, npc):
         #todo: Rewrite this
@@ -120,7 +122,7 @@ class Player:
             if self.hp <= 0:
                 # Юзаем хилку если таковая есть в инвентаре
                 if heal_in_inventory:
-                    player.use(heal_index)
+                    self.use(heal_index)
                 else:
                     print(f'{r.choice(ends_fight_lose)}')
                     self.state = "outside"
@@ -177,8 +179,14 @@ class Player:
         else:
             print(f'Ты получил {xp} XP')
     def get_hp(self, hp):
-        if self.hp + hp >= self.maxhp: self.hp = self.maxhp
-        else: self.hp += hp
+        if self.hp + hp >= self.maxhp:
+            diff = self.maxhp - self.hp
+            self.hp = self.maxhp
+            print('Здоровье восстановлено до максимального')
+            return diff
+        else:
+            self.hp += hp
+            return hp
     # money
     def get_money(self, money):
         self.money += money

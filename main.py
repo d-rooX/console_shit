@@ -9,6 +9,8 @@ player.inventory.add(get_item("hl2"))
 player.inventory.add(get_item("sw4"))
 city.check_city()
 
+def is_agree():
+    return True if input('[Y]es/[N]o: ').replace(' ', '').lower() == 'y' else False
 def buy(item_index):
     item_index -= 1
     if player.state == "in city":
@@ -28,6 +30,7 @@ def walk():
             print(f'Ты покинул {city.name}')
         else: print('У тебя совсем нет HP, полечись немного')
     else:
+        player.steps += 1
         situation = r.choice(("pass", "pass", "pass", "pass", "attack", "attack", "attack", "trap", "trap", "city", "city", "chest"))
         if situation == "attack":
             npc = npc_table[r.randint(0, player.lvl + 1)]  # Ловим уровень НПС
@@ -35,8 +38,10 @@ def walk():
             if not player.fight(npc): # воюем
                 print('Тебя обессиленного дотащили в ближайший город')
                 input("Enter...")
-                player.state = "in city"
                 clear()
+                city.generate()
+                city.check_city()
+                player.state = "in city"
         elif situation == "trap":
             dmg = r.randint(1, player.hp//3)
             player.hp -= dmg
@@ -45,6 +50,7 @@ def walk():
             city.generate()
             if input(f'Ты прибыл в город {city.name}, остановиться?\n[Y]es/[N]o: ').replace(' ', '') in ("Y", "y"):
                 player.state = "in city"
+                player.steps = 0
                 clear()
                 city.check_city()
         elif situation == "chest":
@@ -54,20 +60,27 @@ def walk():
         else:
             print("Ты спокойно погулял по полям")
 def rest():
-    if input('Ты хочешь отдохнуть в отеле?\n[Y]es/[N]o:'):
-        if city.hotel and city.hotel_cost <= player.money:
-            if input(f'Стоимость ночи в отеле этого города {city.hotel_cost} биткоинов. Согласится?\n[Y]es/[N]o: ').lower() == 'y':
-                rested = r.randint(player.maxhp // 2, player.maxhp // 1.5) if city.hotel == 'motel' else r.randint(player.maxhp // 1.5, player.maxhp)
-                res = player.hp + rested
-                player.hp = res if res <= player.maxhp else player.maxhp
-                print(f'Ты отдохнул в отеле и восстановил {res} HP')
-        else: print('У тебя не хватает биткоинов или в городе нет отеля.')
+    if city.hotel:
+        print('Ты хочешь отдохнуть в отеле?')
+        if is_agree():
+            print(f'Стоимость ночи в отеле этого города {city.hotel_cost} биткоинов. Согласится?')
+            if is_agree():
+                if player.money >= city.hotel_cost:
+                    player.is_rested = True
+                    rested = r.randint(player.maxhp // 2, int(player.maxhp // 1.5)) if city.economics == 'medium' else r.randint(int(player.maxhp // 1.1), player.maxhp)
+                    rested = player.get_hp(rested)
+                    print(f'Ты отдохнул в отеле и восстановил {rested} HP')
+                else: print('У тебя не хватает биткоинов')
     else:
-        if input('Отдохнуть под открытым небом?\n[Y]es/[N]o: ').lower() == 'y':
-            player.state = "resting"
-            rested = r.randint(2, player.maxhp // 2)
-            player.get_hp(rested)
-            print(f'Ты разбил палатку и немного отдохнул. Восстановлено {rested} HP')
+        if not player.is_rested:
+            print('Отдохнуть под открытым небом?')
+            if is_agree():
+                player.is_rested = True
+                rested = r.randint(2, int(player.maxhp // 2.5))
+                rested = player.get_hp(rested)
+                print(f'Ты разбил палатку и немного отдохнул. Восстановлено {rested} HP')
+        else: print("Ты уже отдыхал. Пройдись хоть немного!")
+
 def help_commands():
     coms = ''
     for key in commands.keys():
