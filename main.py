@@ -2,6 +2,7 @@ from service import Player, City
 from clear import clear
 from tables import get_item, npc_table, hp_table
 import random as r
+from colors import print_color
 
 player = Player("DAne4ka")
 city = City()
@@ -11,6 +12,15 @@ city.check_city()
 
 def is_agree():
     return True if input('[Y]es/[N]o: ').replace(' ', '').lower() == 'y' else False
+
+def work():
+    if city.is_job and not city.is_job_completed:
+        print('Ты нашёл кого то, кому требуется помощь, и выполнил это непростое поручение')
+        print(f'В награду ты получил {city.payment} биткоинов')
+        player.money += city.payment
+        city.is_job_completed = True
+    else: print('В городе нет подработки')
+
 def buy(item_index):
     item_index -= 1
     if player.state == "in city":
@@ -22,6 +32,7 @@ def buy(item_index):
             print("Ты не можешь купить эту вещь")
     else:
         print("Ты не в городе")
+
 def walk():
     if player.state != "outside":
         if player.hp > 0:
@@ -30,7 +41,7 @@ def walk():
             print(f'Ты покинул {city.name}')
         else: print('У тебя совсем нет HP, полечись немного')
     else:
-        player.steps += 1
+        player.steps += 1 #todo: Нахера я это применял?
         situation = r.choice(("pass", "pass", "pass", "pass", "attack", "attack", "attack", "trap", "trap", "city", "city", "chest"))
         if situation == "attack":
             npc = npc_table[r.randint(0, player.lvl + 1)]  # Ловим уровень НПС
@@ -48,17 +59,20 @@ def walk():
             print(f'Тебя укусила змея! Не очень приятно, ибо ты потерял {dmg} HP.')
         elif situation == "city":
             city.generate()
-            if input(f'Ты прибыл в город {city.name}, остановиться?\n[Y]es/[N]o: ').replace(' ', '') in ("Y", "y"):
+            print(f'Ты прибыл в город {city.name}, остановиться?')
+            if is_agree():
                 player.state = "in city"
                 player.steps = 0
                 clear()
                 city.check_city()
         elif situation == "chest":
-            coins = r.randint(1,50)
+            coins = r.randint(1, 100)
             print('Гуляя по очередному полю, ты нашёл странный сундук. Хотя не такой уж он и странный, если учесть что там были деньги...')
+            print(f'Найдено {coins} биткоинов')
             player.money += coins
         else:
             print("Ты спокойно погулял по полям")
+
 def rest():
     if city.hotel:
         print('Ты хочешь отдохнуть в отеле?')
@@ -67,7 +81,8 @@ def rest():
             if is_agree():
                 if player.money >= city.hotel_cost:
                     player.is_rested = True
-                    rested = r.randint(player.maxhp // 2, int(player.maxhp // 1.5)) if city.economics == 'medium' else r.randint(int(player.maxhp // 1.1), player.maxhp)
+                    rested = r.randint(player.maxhp // 2, int(player.maxhp // 1.5)) if city.economics == 'medium'\
+                        else r.randint(int(player.maxhp // 1.1), player.maxhp)
                     rested = player.get_hp(rested)
                     print(f'Ты отдохнул в отеле и восстановил {rested} HP')
                 else: print('У тебя не хватает биткоинов')
@@ -82,10 +97,23 @@ def rest():
         else: print("Ты уже отдыхал. Пройдись хоть немного!")
 
 def help_commands():
-    coms = ''
-    for key in commands.keys():
-        coms += f"'{key}', "
-    print(coms)
+    coms = {'inventory':'Показать инвентарь',
+            'clear':'Очистить дисплей',
+            'stats':'Вывести информацию о персонаже',
+            'shop':'Показать ассортимент магазина в городе',
+            'walk':'Выйти на улицу\Пойти дальше',
+            'rest':'Отдохнуть',
+            'city':'Вывести информацию о городе',
+            'unequip':'Снять вещь',
+            'use':'Надеть\Использовать вещь',
+            'buy':'Купить вещь в магазине',
+            'get_money':'',
+            'spend_money':'',
+            'get_xp':'',
+            'inventory_add':'',
+            'help':'Вывести это окно'}
+    for key in coms:
+        print(f'{key} - {coms[key]}')
 
 commands = {
         "inventory":       player.inventory.check,  # empty
@@ -93,6 +121,7 @@ commands = {
         "stats":           player.get_stats,  # empty
         "shop":            city.check_shop,  # empty
         "walk":            walk,  # empty
+        "work":            work, # empty
         "rest":            rest, # empty
         "city":            city.check_city, # empty
 
@@ -110,7 +139,7 @@ commands = {
 
 while True:
     try:
-        com = input(': ').split()
+        com = input(': ').lower().split()
         if len(com) > 0:
             command = com[0]
             argument = (int(com[1]) if com[1].isnumeric() else com[1]) if len(com) > 1 else False
@@ -121,3 +150,5 @@ while True:
         print('Введён неверный порядковый номер предмета')
     except KeyError:
         print('Нет такой команды')
+    except: print('Ошибка. Возможно перед командой ты поставил пробел')
+

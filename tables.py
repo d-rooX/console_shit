@@ -34,10 +34,10 @@ items_table = {
                 "sh4": {"name": "Хайповый блокиратор", "pwr": 4, "price": 100, "type": "shield", "id": "sh4"}
         },
         "item":   {
-                "hl1": {"name": "Тухлый чифир", "pwr": 3, "price": 15, "type": "heal", "id": "hl1"},
-                "hl2": {"name": "Бабушкин навар", "pwr": 5, "price": 20, "type": "heal", "id": "hl2"},
-                "hl3": {"name": "Едрёный шлак", "pwr": 8, "price": 30, "type": "heal", "id": "hl3"},
-                "hl4": {"name": "Лютое пойло", "pwr": 10, "price": 50, "type": "heal", "id": "hl4"},
+                "hl1": {"name": "Тухлый чифир", "pwr": 7, "price": 15, "type": "heal", "id": "hl1"},
+                "hl2": {"name": "Бабушкин навар", "pwr": 10, "price": 20, "type": "heal", "id": "hl2"},
+                "hl3": {"name": "Едрёный шлак", "pwr": 15, "price": 30, "type": "heal", "id": "hl3"},
+                "hl4": {"name": "Лютое пойло", "pwr": 20, "price": 50, "type": "heal", "id": "hl4"},
         }
 }
 

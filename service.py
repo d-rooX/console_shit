@@ -17,13 +17,17 @@ class City:
         self.amount = r.randint(0, 2) if self.economics == "low" else r.randint(3, 4) if self.economics == "medium" else r.randint(5, 6)
         # разница рыночной цены (цены в словаре) от цены в этом городе
         self.diff = r.randint(-15, -4) if self.economics == "low" else r.randint(-3, 15) if self.economics == "medium" else r.randint(15, 30)
-
+        # зарплата на работе в этом городе, если зарплата больше нуля значит работа есть
+        self.payment = r.randint(-5, 15) if self.economics == "low" else r.randint(-5, 30) if self.economics == "medium" else r.randint(-5, 125)
+        self.is_job = True if self.payment > 0 else False
+        self.is_job_completed = False
         # random.sample(population, k) - список длиной k из последовательности population.
         self.assortment = [get_item(id, self.diff) for id in r.sample(get_all_ids(), self.amount)]
 
-        # генерим отель или мотель в зависимости от экономики города
-        self.hotel = True if self.economics == 'high' or self.economics == 'medium' else False
-        self.hotel_cost = r.randint(20, 30) if self.economics == 'high' else r.randint(5, 10) if self.economics == 'medium' else 0
+        # отеля нет в городе с низкой экономикой
+        self.hotel = False if self.economics == 'low' else True
+        if self.hotel:
+            self.hotel_cost = r.randint(20, 30) if self.economics == 'high' else r.randint(5, 10) if self.economics == 'medium' else None
     def check_shop(self):
         tbl_headers = ["Предмет", "Характеристики", "Тип", "Цена"]
         tbl_objects = []
@@ -34,11 +38,18 @@ class City:
         tablefmt = "simple" if self.economics == "low" else "grid" if self.economics == "medium" else "fancy_grid"
         print(tabulate(tbl_objects, headers=tbl_headers, tablefmt=tablefmt))
     def check_city(self):
+        economics = {
+                'low':'Низкий',
+                'medium':'Средний',
+                'high':'Высокий'
+        }
+        diff = f'на {abs(self.diff)} {"больше" if self.diff > 0 else "меньше" if self.diff < 0 else "том же уровне с"} ' \
+               f'рыночной цен{"ы" if self.diff != 0 else "ой"}'
         rows = (
             ['Название города', self.name],
-            ['Уровень экономики', self.economics],
+            ['Уровень экономики', economics[self.economics]],
             ['Есть ли отель?', f'{"Да" if self.hotel else "Нет"}'],
-            ['Разница цен', self.diff]
+            ['Разница цен', diff]
         )
         print(tabulate(rows))
 
@@ -110,14 +121,12 @@ class Player:
 
         auto = True if inp == "y" else False
         while True:
+            heal_in_inventory = False
             for item in self.inventory.inv:
                 if item["type"] == "hl":
                     heal_index = self.inventory.index(item)
                     heal_in_inventory = True
                     break
-            else:
-                heal_in_inventory = False
-
             # Проверяем здоровье. Получаем уровень при победе
             if self.hp <= 0:
                 # Юзаем хилку если таковая есть в инвентаре
@@ -125,13 +134,12 @@ class Player:
                     self.use(heal_index)
                 else:
                     print(f'{r.choice(ends_fight_lose)}')
-                    self.state = "outside"
                     self.get_xp(xp_table[npc_lvl]//2)
                     return False
             elif npc_hp <= 0:
                 print(f'{npc_name} {r.choice(ends_fight_win)}')
-                self.state = "outside"
                 self.get_xp(xp_table[npc_lvl])
+                self.get_money(r.randint(10, xp_table[npc_lvl]))
                 return True
             else:
                 # Рандом определяет кто сколько урона получит, учитывая уровень защиты
